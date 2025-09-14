@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ruleta Sublicuentas – Promos & Regalías</title>
+  <meta name="description" content="Ruleta digital interactiva de Sublicuentas: cortesías, bonos en Lempiras y descuentos." />
+  <style>
+    :root {
+      --bg: #0a0d14;
+      --card: #131a27;
+      --accent: #ff2e2e;      /* rojo del hoodie del logo */
+      --accent-2: #0e1a2f;    /* azul marino del contorno */
+      --text: #f1f2f6;
+      --muted: #a6adbb;
+      --success: #16a34a;
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Inter, Ubuntu, "Helvetica Neue", Arial;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(255,46,46,.12), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(14,26,47,.35), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      display:grid; place-items:center; padding:24px;
+    }
+    .app{width:min(1024px,100%); display:grid; gap:18px}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,.45);
+      backdrop-filter: blur(8px);
+    }
+    header.card{padding:16px 18px; display:flex; align-items:center; justify-content:space-between; gap:14px}
+    .brand{display:flex; align-items:center; gap:12px}
+    .logoimg{width:46px; height:46px; border-radius:12px; object-fit:cover; background:#000}
+    h1{margin:0; font-size:clamp(18px,2.8vw,28px); letter-spacing:.3px}
+    .sub{color:var(--muted); font-size:14px}
+    .badge{ padding:6px 10px; border-radius:999px; background:rgba(255,46,46,.12); color:#ffb4b4; font-weight:700; font-size:12px; border:1px solid rgba(255,46,46,.4) }
+    .grid{display:grid; gap:18px; grid-template-columns:1fr}
+    @media(min-width:900px){ .grid{grid-template-columns:1.2fr .8fr} }
+    .wheel-wrap{ position:relative; padding:24px; display:grid; place-items:center }
+    canvas{ width:100%; max-width:520px; height:auto; display:block }
+    .pointer{ position:absolute; top:18px; left:50%; transform:translateX(-50%);
+      width:0; height:0; border-left:18px solid transparent; border-right:18px solid transparent; border-bottom:28px solid var(--accent);
+      filter: drop-shadow(0 8px 18px rgba(255,46,46,.45)); }
+    .controls{ display:grid; gap:10px; grid-template-columns:1fr 1fr; width:min(520px,92%); margin-top:16px }
+    .btn{ cursor:pointer; border:none; border-radius:14px; padding:14px 18px; font-weight:800; letter-spacing:.3px;
+      background: linear-gradient(180deg, var(--accent), #ff6a6a); color:#090c14; box-shadow:0 10px 24px rgba(255,46,46,.35) }
+    .btn.secondary{ background: linear-gradient(180deg, #20283a, #141b2b); color:#e8e9ef; box-shadow:none; border:1px solid rgba(255,255,255,.1) }
+    aside.card .controls{padding:18px}
+    label{font-size:13px; color:var(--muted)}
+    input, select{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text) }
+    .legend{ padding:16px 18px }
+    .legend h3{ margin:0 0 10px 0; font-size:16px }
+    .legend ul{ list-style:none; padding:0; margin:0; display:grid; gap:8px }
+    .legend li{ color:var(--muted); font-size:14px; display:flex; align-items:center; gap:8px }
+    .chip{ width:12px; height:12px; border-radius:3px; display:inline-block }
+    footer.card{ padding:14px 18px; color:var(--muted); font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:12px }
+    .note{ font-size:12px; color:var(--muted) }
+    .result{ position:fixed; inset:0; display:none; place-items:center; background:rgba(6,7,12,.55); backdrop-filter:blur(4px) }
+    .result.show{ display:grid }
+    .modal{ background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:20px; padding:22px 20px; width:min(420px,92vw); text-align:center }
+    .modal h2{ margin:0 0 8px 0 }
+    .prize{ font-size:clamp(22px,3.2vw,28px); font-weight:800; margin:8px 0 14px }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="card">
+      <div class="brand">
+        <!-- Reemplace src por el nombre de su archivo: guarde el logo adjunto como 'logo-sublicuentas.png' en la misma carpeta -->
+        <img src="logo-sublicuentas.png" alt="Logo Sublicuentas" class="logoimg" />
+        <div>
+          <h1>RULETA SUBLICUENTAS</h1>
+          <div class="sub">Gamifique sus promociones: premios automáticos tras cada pago.</div>
+        </div>
+      </div>
+      <div class="badge">SUBLI CLUB</div>
+    </header>
+
+    <div class="grid">
+      <section class="card wheel-wrap">
+        <div class="pointer" aria-hidden="true"></div>
+        <canvas id="wheel" width="600" height="600" aria-label="Ruleta de premios"></canvas>
+        <div class="controls">
+          <button class="btn" id="spinBtn">🎡 Girar</button>
+          <button class="btn secondary" id="resetBtn">↺ Reset</button>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div class="controls">
+          <div>
+            <label for="cliente">Nombre del cliente (opcional)</label>
+            <input id="cliente" type="text" placeholder="Ej.: Juan Martínez" />
+          </div>
+          <div>
+            <label for="prob">Probabilidad</label>
+            <select id="prob">
+              <option value="weighted">Ponderada</option>
+              <option value="uniform">Uniforme</option>
+            </select>
+          </div>
+        </div>
+        <div class="legend">
+          <h3>Premios de esta ruleta</h3>
+          <ul id="legend"></ul>
+          <div class="note">💡 Edite los premios y pesos en el script para ajustar probabilidades.</div>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="card">
+      <span>© Sublicuentas • Lista para WhatsApp, Telegram y GitHub Pages</span>
+      <span class="note">Single‑file • Mobile‑first</span>
+    </footer>
+  </div>
+
+  <div class="result" id="result">
+    <div class="modal">
+      <h2>¡Resultado!</h2>
+      <div id="clienteOut" class="note" style="margin-bottom:6px;"></div>
+      <div class="prize" id="prizeText">—</div>
+      <button class="btn" id="okBtn">Entendido</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== Premios (editable) =====
+    const PRIZES = [
+      { label: '1 día cortesía', color: '#ff2e2e', textColor: '#0a0d14', weight: 2 },
+      { label: '2 días cortesía', color: '#0e1a2f', textColor: '#ffffff', weight: 1 },
+      { label: 'Lps. 10 bono',    color: '#16a34a', textColor: '#0a0d14', weight: 1.5 },
+      { label: 'Lps. 5 bono',     color: '#f59e0b', textColor: '#0a0d14', weight: 2.2 },
+      { label: 'Descuento 10%',   color: '#22d3ee', textColor: '#0a0d14', weight: 1.3 },
+    ];
+
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const center = { x: canvas.width/2, y: canvas.height/2 };
+    const radius = canvas.width/2 - 16;
+
+    function drawWheel(){
+      ctx.clearRect(0,0,canvas.width, canvas.height);
+      const total = PRIZES.length;
+      const arc = (2*Math.PI)/total;
+
+      // base
+      const grd = ctx.createRadialGradient(center.x, center.y, radius*0.1, center.x, center.y, radius);
+      grd.addColorStop(0, 'rgba(255,255,255,0.08)');
+      grd.addColorStop(1, 'rgba(255,255,255,0.02)');
+      ctx.fillStyle = grd;
+      ctx.beginPath(); ctx.arc(center.x, center.y, radius+12, 0, Math.PI*2); ctx.fill();
+
+      for(let i=0;i<total;i++){
+        const start=i*arc, end=start+arc;
+        ctx.beginPath(); ctx.moveTo(center.x, center.y);
+        ctx.arc(center.x, center.y, radius, start, end); ctx.closePath();
+        ctx.fillStyle = PRIZES[i].color; ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,.2)'; ctx.lineWidth = 2; ctx.stroke();
+
+        // texto
+        ctx.save();
+        ctx.translate(center.x, center.y);
+        ctx.rotate(start + arc/2);
+        ctx.textAlign='right';
+        ctx.fillStyle = PRIZES[i].textColor || '#fff';
+        ctx.font = '700 18px Inter, system-ui, Arial';
+        wrapText(ctx, PRIZES[i].label, radius - 18, 20);
+        ctx.restore();
+      }
+
+      // centro
+      ctx.beginPath(); ctx.arc(center.x, center.y, 54, 0, Math.PI*2);
+      const cg = ctx.createLinearGradient(center.x-40, center.y-40, center.x+40, center.y+40);
+      cg.addColorStop(0, '#ff2e2e'); cg.addColorStop(1, '#b51919');
+      ctx.fillStyle = cg; ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '800 16px Inter, system-ui, Arial'; ctx.textAlign='center';
+      ctx.fillText('SUBLI', center.x, center.y-2);
+      ctx.font = '600 11px Inter, system-ui, Arial';
+      ctx.fillText('GIRAR', center.x, center.y+14);
+    }
+
+    function wrapText(ctx, text, maxWidth, lineHeight){
+      const words = text.split(' ');
+      let line=''; let y=6;
+      for(let n=0;n<words.length;n++){
+        const test=line+words[n]+' ';
+        if(ctx.measureText(test).width>maxWidth && n>0){
+          ctx.fillText(line.trim(), radius-12, 4);
+          line=words[n]+' '; y+=lineHeight;
+        } else { line=test; }
+      }
+      ctx.fillText(line.trim(), radius-12, y);
+    }
+
+    function renderLegend(){
+      const ul = document.getElementById('legend');
+      ul.innerHTML='';
+      PRIZES.forEach(p=>{
+        const li=document.createElement('li');
+        const chip=document.createElement('span'); chip.className='chip'; chip.style.background=p.color; li.appendChild(chip);
+        const txt=document.createElement('span'); txt.textContent = `${p.label}${p.weight?` (peso ${p.weight})`:''}`; li.appendChild(txt);
+        ul.appendChild(li);
+      });
+    }
+
+    function pickPrize(mode='weighted'){
+      if(mode==='uniform'){ const i=Math.floor(Math.random()*PRIZES.length); return {index:i, prize:PRIZES[i]}; }
+      const w = PRIZES.map(p=>Math.max(0,Number(p.weight)||1));
+      const sum = w.reduce((a,b)=>a+b,0); let r = Math.random()*sum;
+      for(let i=0;i<w.length;i++){ if(r<w[i]) return {index:i, prize:PRIZES[i]}; r-=w[i]; }
+      const last=PRIZES.length-1; return {index:last, prize:PRIZES[last]};
+    }
+
+    const spinBtn=document.getElementById('spinBtn');
+    const resetBtn=document.getElementById('resetBtn');
+    const resultEl=document.getElementById('result');
+    const prizeText=document.getElementById('prizeText');
+    const okBtn=document.getElementById('okBtn');
+    const probSel=document.getElementById('prob');
+    const clienteIn=document.getElementById('cliente');
+    const clienteOut=document.getElementById('clienteOut');
+
+    let spinning=false, rotation=0, lastIndex=null;
+
+    function indexToAngle(i){
+      const arc=(2*Math.PI)/PRIZES.length;
+      const angleToTop = -Math.PI/2;
+      return angleToTop - (i*arc + arc/2);
+    }
+
+    function spin(){
+      if(spinning) return;
+      let sel = pickPrize(probSel.value);
+      // evitar repetir inmediato
+      if(lastIndex!==null && PRIZES.length>1){
+        let guard=0; while(sel.index===lastIndex && guard<10){ sel = pickPrize(probSel.value); guard++; }
+      }
+      const target = indexToAngle(sel.index);
+      const extraTurns = Math.floor(3 + Math.random()*2);
+      const finalRot = target + extraTurns*2*Math.PI;
+      const duration = 4200 + Math.random()*600;
+      const start = performance.now();
+      const startRot = rotation;
+      spinning=true; spinBtn.textContent='Girando…'; spinBtn.disabled=true;
+      function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
+      function frame(now){
+        const t = Math.min(1, (now-start)/duration);
+        const eased = easeOutCubic(t);
+        rotation = startRot + (finalRot-startRot)*eased;
+        ctx.save(); ctx.translate(center.x, center.y); ctx.rotate(rotation); ctx.translate(-center.x, -center.y);
+        drawWheel(); ctx.restore();
+        if(t<1){ requestAnimationFrame(frame); } else {
+          spinning=false; spinBtn.textContent='🎡 Girar'; spinBtn.disabled=false; lastIndex=sel.index;
+          showResult(sel.prize);
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function showResult(prize){
+      const name = clienteIn.value.trim();
+      clienteOut.textContent = name ? `Cliente: ${name}` : '';
+      prizeText.textContent = prize.label;
+      resultEl.classList.add('show');
+      confettiQuick();
+    }
+    function resetWheel(){ rotation=0; lastIndex=null; spinning=false; drawWheel(); }
+    okBtn.addEventListener('click', ()=> resultEl.classList.remove('show'));
+    resultEl.addEventListener('click', e=>{ if(e.target===resultEl) resultEl.classList.remove('show'); });
+    spinBtn.addEventListener('click', spin);
+    resetBtn.addEventListener('click', resetWheel);
+
+    function confettiQuick(){
+      const N=70;
+      for(let i=0;i<N;i++){
+        const p=document.createElement('div');
+        p.style.position='fixed'; p.style.top='-8px'; p.style.left=(Math.random()*100)+'vw';
+        const size=6+Math.random()*6; p.style.width=size+'px'; p.style.height=size+'px';
+        p.style.background = ['#ff2e2e','#0e1a2f','#16a34a','#f59e0b','#22d3ee'][ (Math.random()*5)|0 ];
+        p.style.opacity=.95; p.style.borderRadius = Math.random()>.5 ? '2px':'50%'; p.style.pointerEvents='none';
+        p.style.transition = `transform 1.2s linear, top 1.2s linear, opacity .3s ease ${0.9+Math.random()*0.4}s`;
+        document.body.appendChild(p);
+        requestAnimationFrame(()=>{
+          p.style.top='110vh';
+          p.style.transform = `translateY(${70+Math.random()*60}vh) rotate(${360+Math.random()*720}deg)`;
+          setTimeout(()=>p.remove(),1600);
+        });
+      }
+    }
+
+    renderLegend();
+    drawWheel();
+  </script>
+</body>
+</html>
